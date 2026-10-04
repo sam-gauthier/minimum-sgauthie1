@@ -1,17 +1,19 @@
 ARM_PREFIX ?= arm-none-eabi-
+
 CC := $(ARM_PREFIX)gcc
 AR := $(ARM_PREFIX)ar
 
 BUILD := build
 KERNEL := $(BUILD)/minimum-kernel.elf
 RUNTIME := $(BUILD)/libminemu_kernel.a
-
 CORE_OBJECT := $(BUILD)/core/main.o
+
 RUNTIME_OBJECTS := \
 	$(BUILD)/runtime/block.o \
 	$(BUILD)/runtime/exception.o \
 	$(BUILD)/runtime/memory.o \
 	$(BUILD)/runtime/trace.o \
+	$(BUILD)/drivers/uart.o \
 	$(BUILD)/startup/boot.o \
 	$(BUILD)/startup/vectors.o
 
@@ -19,7 +21,9 @@ OBJECTS := $(CORE_OBJECT) $(RUNTIME_OBJECTS)
 DEPENDENCIES := $(OBJECTS:.o=.d)
 
 ARCH_FLAGS := -mcpu=cortex-a9 -marm -mfloat-abi=soft
+
 CPPFLAGS := -Iinclude
+
 CFLAGS := $(ARCH_FLAGS) \
 	-ffreestanding \
 	-fno-builtin \
@@ -66,6 +70,10 @@ $(BUILD)/core/%.o: src/core/%.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 $(BUILD)/runtime/%.o: src/runtime/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/drivers/%.o: src/drivers/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
