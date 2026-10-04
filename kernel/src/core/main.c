@@ -18,7 +18,9 @@ void minemu_kernel_main(const struct minemu_boot_info *boot_info) {
     minemu_trace_event(1);
 
     uart_init();
+    __asm__ volatile("cpsie i" ::: "memory");   /* or the enable helper from irq.h */
     uart_puts("hello world\n");
+    msh_run();
 
     minemu_fail_stop();
 }

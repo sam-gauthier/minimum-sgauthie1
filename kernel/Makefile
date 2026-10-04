@@ -6,7 +6,14 @@ AR := $(ARM_PREFIX)ar
 BUILD := build
 KERNEL := $(BUILD)/minimum-kernel.elf
 RUNTIME := $(BUILD)/libminemu_kernel.a
-CORE_OBJECT := $(BUILD)/core/main.o
+
+# Linked directly (not via the archive) so strong symbols always override
+# the weak stubs in runtime/exception.c.
+CORE_OBJECTS := \
+	$(BUILD)/core/main.o \
+	$(BUILD)/core/msh.o \
+	$(BUILD)/runtime/irq.o \
+	$(BUILD)/runtime/irq_trampoline.o
 
 RUNTIME_OBJECTS := \
 	$(BUILD)/runtime/block.o \
@@ -17,7 +24,7 @@ RUNTIME_OBJECTS := \
 	$(BUILD)/startup/boot.o \
 	$(BUILD)/startup/vectors.o
 
-OBJECTS := $(CORE_OBJECT) $(RUNTIME_OBJECTS)
+OBJECTS := $(CORE_OBJECTS) $(RUNTIME_OBJECTS)
 DEPENDENCIES := $(OBJECTS:.o=.d)
 
 ARCH_FLAGS := -mcpu=cortex-a9 -marm -mfloat-abi=soft
@@ -61,9 +68,9 @@ $(RUNTIME): $(RUNTIME_OBJECTS)
 	@mkdir -p $(dir $@)
 	$(AR) rcs $@ $^
 
-$(KERNEL): $(CORE_OBJECT) $(RUNTIME) linker/kernel.ld
+$(KERNEL): $(CORE_OBJECTS) $(RUNTIME) linker/kernel.ld
 	@mkdir -p $(dir $@)
-	$(CC) $(LDFLAGS) $(CORE_OBJECT) $(RUNTIME) $(LIBGCC) -o $@
+	$(CC) $(LDFLAGS) $(CORE_OBJECTS) $(RUNTIME) $(LIBGCC) -o $@
 
 $(BUILD)/core/%.o: src/core/%.c
 	@mkdir -p $(dir $@)
@@ -72,6 +79,10 @@ $(BUILD)/core/%.o: src/core/%.c
 $(BUILD)/runtime/%.o: src/runtime/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/runtime/%.o: src/runtime/%.S
+	@mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(ASFLAGS) -c $< -o $@
 
 $(BUILD)/drivers/%.o: src/drivers/%.c
 	@mkdir -p $(dir $@)
