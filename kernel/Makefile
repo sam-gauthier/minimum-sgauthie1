@@ -12,8 +12,12 @@ RUNTIME := $(BUILD)/libminemu_kernel.a
 CORE_OBJECTS := \
 	$(BUILD)/core/main.o \
 	$(BUILD)/core/msh.o \
+	$(BUILD)/core/syscall.o \
+	$(BUILD)/core/user_space.o \
 	$(BUILD)/runtime/irq.o \
-	$(BUILD)/runtime/irq_trampoline.o
+	$(BUILD)/runtime/irq_trampoline.o \
+	$(BUILD)/runtime/svc.o \
+	$(BUILD)/runtime/user.o
 
 RUNTIME_OBJECTS := \
 	$(BUILD)/runtime/block.o \
@@ -32,6 +36,8 @@ ARCH_FLAGS := -mcpu=cortex-a9 -marm -mfloat-abi=soft
 CPPFLAGS := -Iinclude
 
 CFLAGS := $(ARCH_FLAGS) \
+	-O2 \
+	-fno-tree-loop-distribute-patterns \
 	-ffreestanding \
 	-fno-builtin \
 	-fdata-sections \

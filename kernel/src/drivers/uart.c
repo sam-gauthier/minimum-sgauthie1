@@ -57,6 +57,13 @@ int uart_getc_nonblock(void) {
     return ret;
 }
 
+int uart_rx_ready(void) {
+    uint32_t f = irq_save();
+    int ready = (rx_tail != rx_head) || ((MINEMU_UART0->status & MINEMU_UART_STATUS_RX_READY) != 0);
+    irq_restore(f);
+    return ready;
+}
+
 char uart_getc(void) {
     int c;
     while ((c = uart_getc_nonblock()) < 0) { }
